@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.gusi.demo.idao.IStudent">
+	<!-- 学生结果集合映射， -->
+	<resultMap type="StudentAlias" id="StudentResult">
+		<id column="sid" jdbcType="BIGINT" property="id" />
+		<result column="sname" jdbcType="VARCHAR" property="name" />
+		<result column="sex" jdbcType="TINYINT" property="sex" />
+		<result column="teacherId" jdbcType="BIGINT" property="teacherId" />
+		<!-- 多对一关系的时候，多方使用association标签映射一方，属性就是Student对象中定义的Teacher属性的名称。 因为是对象类型，所以不能再直接使用column属性，需要使用另一个映射对象结果集合，该结果集合也是通过namespace.id指定。 
+			当然也可以不引用其他结果集合，在标签内部可以自己在定义临时的resultMap标签对象,比如id标签，result标签 -->
+		<association property="teacher"
+			resultMap="com.gusi.demo.idao.ITeacher.TeacherResult"></association>
+	</resultMap>
+
+	<!-- 查询学生基本信息，并且返回包含老师对象的信息 -->
+	<select id="queryOneStudent" parameterType="long" resultMap="StudentResult">
+		<!--在连接表查询的时候， 一定要注意这里的别名，不然会冲突 -->
+		SELECT a.id sid,a.name sname,a.sex,a.teacherId,b.id,b.name,b.course
+		FROM student a join teacher b on a.teacherId = b.id
+		WHERE a.id =
+		#{id:BIGINT}
+	</select>
+
+	<insert id="insertOneStudent" parameterType="com.gusi.demo.pojo.Student">
+		Insert into student
+		(name,sex,teacherId) values(#{name},#{sex},#{teacherId})
+	</insert>
+
+	<!-- 批量新增的时候，注意接收的对象是一个列表，需要在动态拼接sql的时候遍历参数集合对象 -->
+	<insert id="insertBatchStudent" parameterType="java.util.List">
+		Insert into student (name,sex,teacherId) values
+		<!-- 注意foreach的语法,集合直接写list字符串，用item表示当前遍历的对象，结果集合通过使用逗号分隔使用separator属性 -->
+		<foreach collection="list" item="item" separator=",">
+			(#{item.name},#{item.sex},#{item.teacherId})
+		</foreach>
+	</insert>
+
+</mapper>

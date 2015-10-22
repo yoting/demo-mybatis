@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.gusi.demo.idao.IUser">
+
+	<resultMap type="com.gusi.demo.pojo.User" id="UserResult">
+		<id column="id" jdbcType="INTEGER" property="id" />
+		<result column="username" jdbcType="VARCHAR" property="username" />
+		<result column="password" jdbcType="VARCHAR" property="password" />
+	</resultMap>
+
+	<select id="count" parameterType="UserAlias" resultType="int">
+		select count(*) from user
+		<where>
+			<!-- xml中and符号等需要使用特定字符串表示，还有${}标签和#{}标签的区别 -->
+			<if test="username !=null &amp;&amp; username.length() &gt; 0">and username like '%${username}%'</if>
+		</where>
+	</select>
+
+	<select id="queryUserById" parameterType="int" resultMap="UserResult">
+		SELECT
+		* FROM user WHERE id = #{id:INTEGER}
+	</select>
+
+	<!-- 注意通过map接收参数 -->
+	<select id="queryListUser" parameterType="java.util.Map"
+		resultMap="UserResult">
+		select * from user
+		<where>
+			<if test="user.username !=null &amp;&amp; user.username.length() &gt; 0">username like '%${user.username}%'</if>
+		</where>
+		limit #{pageInfo.dbIndex} , #{pageInfo.pageSize}
+	</select>
+	
+<!-- 通过拦截器帮助完成分页查询 -->
+<select id="queryListUserByPage" parameterType="java.util.Map"
+	resultMap="UserResult">
+	select * from user
+	<where>
+		<if test="user.username !=null &amp;&amp; user.username.length() &gt; 0">username like '%${user.username}%'</if>
+	</where>
+	<!-- limit #{pageInfo.dbIndex} , #{pageInfo.dbNumber} -->
+</select>
+</mapper>

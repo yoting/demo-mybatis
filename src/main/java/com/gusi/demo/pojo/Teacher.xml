@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.gusi.demo.idao.ITeacher">
+
+	<!--该结果集映射只映射老师的基本属性，没有映射老师所对应的学生集合 -->
+	<resultMap type="TeacherAlias" id="TeacherResult">
+		<id column="id" jdbcType="BIGINT" property="id" />
+		<result column="name" jdbcType="VARCHAR" property="name" />
+		<result column="course" jdbcType="VARCHAR" property="course" />
+	</resultMap>
+
+	<!--该结果集映射了老师的基本信息以及老师所有学生的信息 -->
+	<resultMap type="TeacherAlias" id="TeacherWithShtudentResult">
+		<id column="id" jdbcType="BIGINT" property="id" />
+		<result column="name" jdbcType="VARCHAR" property="name" />
+		<result column="course" jdbcType="VARCHAR" property="course" />
+		<!--一对多关系的时候，一方使用collection标签映射多方，属性就是Teacher对象中的集合属性名称。
+		因为是集合类型，所以不能再直接使用column属性，需要使用另一个映射对象结果集合，该结果集合也是通过namespace.id指定。
+		当然也可以不引用其他结果集合，在标签内部可以自己在定义临时的resultMap标签对象，比如id,result标签 -->
+		<collection property="students"
+			resultMap="com.gusi.demo.idao.IStudent.StudentResult"></collection>
+	</resultMap>
+
+	<!--查询老师，但是不涉及到老师的所有学生 -->
+	<select id="queryOneTeacher" parameterType="long" resultMap="TeacherResult">
+		SELECT a.id,a.name,a.course
+		FROM teacher a
+		WHERE a.id = #{id:BIGINT}
+	</select>
+
+	<!--这里查询结果中就包含老师所有的学生集合，使用到了多表连接查询 -->
+	<select id="queryOneTeacherWithStudent" parameterType="long"
+		resultMap="TeacherWithShtudentResult">
+		<!-- 对于相同的属性名称s.id和t.id以及s.name和t.name，一定要注意起别名，不然会冲突 -->
+		SELECT a.id,a.name,a.course,b.id sid,b.name
+		sname,b.sex,b.teacherId
+		FROM teacher a left join student b on
+		a.id=b.teacherId
+		WHERE a.id = #{id:BIGINT}
+	</select>
+
+	<!-- userGeneratedKeys和keyProperty属性可以让插入后对象获得本身自己的id -->
+	<insert id="insertOneTeacher" parameterType="TeacherAlias"
+		useGeneratedKeys="true" keyProperty="id">
+		insert into teacher
+		(name,course)
+		values(#{name},#{course})
+	</insert>
+
+</mapper>
